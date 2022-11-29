@@ -6,8 +6,39 @@ import random
 
 import requests as requests
 from dotenv import load_dotenv
+import boto3
+from botocore.exceptions import ClientError
 
 from logger import log
+
+
+def get_aws_secret():
+
+    secret_name = "news_api_key"
+    region_name = "eu-central-1"
+
+    # Create a Secrets Manager client
+    session = boto3.session.Session()
+    client = session.client(
+        service_name='secretsmanager',
+        region_name=region_name
+    )
+
+    try:
+        get_secret_value_response = client.get_secret_value(
+            SecretId=secret_name
+        )
+    except ClientError as e:
+        # For a list of exceptions thrown, see
+        # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
+        raise e
+
+    # Decrypts secret using the associated KMS key.
+    secret = get_secret_value_response['SecretString']
+
+    # Your code goes here.
+
+    return secret
 
 
 def get_sample(api_key: str,
@@ -51,15 +82,24 @@ def get_sample(api_key: str,
     log.info("Saved %i articles at %s" % (sample_size, dump_path))
 
 
-def main():
-    # load environment variables from .env file if present
-    load_dotenv()
-    api_key = os.environ.get("API_KEY")
+def main(secret_source: str = "aws"):
+
+    api_key = None
+
+    if secret_source == "aws":
+        api_key = get_aws_secret()
+    elif secret_source == "env":
+        load_dotenv()
+        api_key = os.environ.get("NEWS_API_KEY")
+    else:
+        log.error("secret_source arg must be either 'aws' or 'env'!")
+
     if api_key:
         log.info("Retrieved API KEY of length %s" % len(api_key))
     else:
         log.error("API key not found! Exiting.")
         return
+
     get_sample(api_key)
 
 
