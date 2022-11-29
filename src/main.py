@@ -30,12 +30,19 @@ def get_sample(sample_size: int = 5):
 
     if resp.status_code == 200:
         log.info("Request was successful.")
+    else:
+        log.error("Request failed!")
+        log.info(resp)
+        return
 
     data = resp.json()
     n_articles = data['totalResults']
 
     if n_articles:
         log.info("Extracted %i articles" % n_articles)
+    else:
+        log.error("Request returned 0 articles")
+        return
 
     articles = random.sample(data['articles'], sample_size)
 
