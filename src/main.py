@@ -60,6 +60,7 @@ def get_sample(api_key: str,
     else:
         log.error("Request failed!")
         log.info(resp)
+        log.info(resp.json())
         return
 
     data = resp.json()
