@@ -9,19 +9,15 @@ from dotenv import load_dotenv
 
 from logger import log
 
-# load environment variables from .env file if present
-load_dotenv()
-API_KEY = os.environ.get("API_KEY")
-log.info("Retrieved API KEY of length %s" % len(API_KEY))
 
-
-def get_sample(sample_size: int = 5):
+def get_sample(api_key: str,
+               sample_size: int = 5):
 
     endpoint = 'https://newsapi.org/v2/everything'
     query = "apple OR microsoft OR alphabet OR Amazon OR meta"
     today_iso: str = datetime.date.today().isoformat()
 
-    params = {'apiKey': API_KEY,
+    params = {'apiKey': api_key,
               'qInTitle': query,
               'from': today_iso
               }
@@ -55,5 +51,17 @@ def get_sample(sample_size: int = 5):
     log.info("Saved %i articles at %s" % (sample_size, dump_path))
 
 
+def main():
+    # load environment variables from .env file if present
+    load_dotenv()
+    api_key = os.environ.get("API_KEY")
+    if api_key:
+        log.info("Retrieved API KEY of length %s" % len(api_key))
+    else:
+        log.error("API key not found! Exiting.")
+        return
+    get_sample(api_key)
+
+
 if __name__ == "__main__":
-    get_sample()
+    main()
